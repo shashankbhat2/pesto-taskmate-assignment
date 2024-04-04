@@ -29,8 +29,18 @@ model Task {
   status       TaskStatus @default(TODO)
   userId       String
   user         User       @relation(fields: [userId], references: [id])
-  dueDate      DateTime?  
+  dueDate      DateTime?
   reminderTime DateTime?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+  notes        Note[]
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  content   String
+  taskId    String?
+  task      Task?    @relation(fields: [taskId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

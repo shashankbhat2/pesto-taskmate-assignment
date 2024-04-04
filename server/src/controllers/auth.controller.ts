@@ -1,7 +1,7 @@
 import { db } from "../utils/db";
 import { LoginUserSchemaType, SignupUserSchemaType } from "../utils/schemas";
-import bctypt from "bcrypt";
-import { Response } from "express";
+import bcrypt from "bcrypt";
+import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
 export const userSignupController = async (
@@ -12,11 +12,11 @@ export const userSignupController = async (
   try {
     let user = await db.user.findUnique({ where: { email } });
     if (user) {
-      return res.json({ message: "User already exists" }).status(400);
+      return res.status(400).json({ message: "User already exists" });
     }
 
-    const salt = await bctypt.genSalt(10);
-    const hashedPassword = await bctypt.hash(password, salt);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
     user = await db.user.create({
       data: {
         name,
@@ -49,39 +49,48 @@ export const userSignupController = async (
   }
 };
 
-export const userLoginController = async (
-  req: LoginUserSchemaType,
-  res: Response
-) => {
+export const userLoginController = async (req: LoginUserSchemaType, res: Response) => {
   const { email, password } = req.body;
   try {
-    let user = await db.user.findUnique({ where: { email } });
+    const user = await db.user.findUnique({ where: { email } });
+    console.log(email)
     if (!user) {
-      res.json({ message: "Invalid credentials" }).status(400);
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const isMatch = bctypt.compare(password, user?.password!);
+    const isMatch = await bcrypt.compare(password, user.password);
+    console.log(isMatch);
     if (!isMatch) {
-      res.json({ message: "Invalid credentials" }).status(400);
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const payload = {
       user: {
-        id: user?.id,
+        id: user.id,
       },
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET!, {
       expiresIn: "24h",
     });
-    res
+
+    return res
       .cookie("auth_token", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         maxAge: 24 * 60 * 60 * 1000,
       })
-      .status(201)
-      .json({ message: "User loggedin successfully" });
+      .status(201) 
+      .json({ message: "User logged in successfully" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const userLogoutController = async (req: Request, res: Response) => {
+  try {
+    res.clearCookie("auth_token").json({ message: "Logged out successfully" });
   } catch (error: any) {
     console.log(error);
     res.status(500).json({ message: "Server error" });

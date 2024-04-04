@@ -34,7 +34,7 @@ export const LoginUserSchema = z.object({
 export const CreateTaskSchema = z.object({
   body: z.object({
     title: z.string({ required_error: "Title is required" }),
-    status: z.enum(["TODO", "DOING", "DONE"]),
+    status: z.enum(["TODO", "DOING", "DONE"]).optional(),
     dueDate: z.string().optional().or(z.literal(null)),
     reminderTime: z.string().optional().or(z.literal(null)),
   }),
@@ -50,16 +50,16 @@ export const GetPaginatedUserTasksSchema = z.object({
 export const UpdateTaskSchema = z.object({
   params: z.object({ taskId: z.string() }),
   body: z.object({
-    title: z.string(),
-    status: z.enum(["TODO", "DOING", "DONE"]),
-    dueDate: z.string().optional().or(z.literal(null)),
-    reminderTime: z.string().optional().or(z.literal(null)),
+    title: z.string().optional(),
+    status: z.enum(["TODO", "DOING", "DONE"]).optional(),
+    dueDate: z.string().optional().or(z.literal(null)).optional(),
+    reminderTime: z.string().optional().or(z.literal(null)).optional(),
   }),
 });
 
 export const DeleteTaskSchema = z.object({
   params: z.object({ taskId: z.string() }),
-})
+});
 
 export type SignupUserSchemaType = z.infer<typeof SignupUserSchema>;
 export type LoginUserSchemaType = z.infer<typeof LoginUserSchema>;
